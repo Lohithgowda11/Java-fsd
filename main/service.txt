@@ -1,0 +1,268 @@
+package com.example.service;
+
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.util.ArrayUtils;
+
+import com.example.entity.Address;
+import com.example.entity.UserDetails;
+import com.example.repository.UserDetailsRepository;
+import com.example.responsehandler.AadharResponseHandler;
+
+import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.Pattern;
+
+@Service
+@Transactional
+public class UserDetailsService {
+
+    @Autowired
+    UserDetailsRepository detailsRepository;
+
+    public List<UserDetails> getAllDetails() {
+        return detailsRepository.findAll();
+    }
+
+    public UserDetails getDetails(long id) {
+        Optional<UserDetails> user = detailsRepository.findById(id);
+        return user.orElse(null);
+    }
+
+    public ResponseEntity<String> addDetails(UserDetails userDetails) {
+        try {
+            validateUserDetails(userDetails); // Validate user details
+            generateAndSetAadharNo(userDetails); // Generate Aadhar number
+            detailsRepository.save(userDetails); // Save to the database
+
+            return AadharResponseHandler.handleSuccessResponse(
+                    String.valueOf(userDetails.getAadharno()), userDetails);
+        } catch (ValidationException e) {
+            List<AadharResponseHandler.ErrorDetail> errors = new ArrayList<>();
+            errors.add(new AadharResponseHandler.ErrorDetail("null", e.getMessage()));
+            return AadharResponseHandler.handleFailureResponse(errors);
+        }
+    }
+    private void validateUserDetails(UserDetails userDetails) throws ValidationException {
+        // Add your validations here
+
+        validateName(userDetails.getFirstname(), "First Name");
+        validateName(userDetails.getLastname(), "Last Name");
+        validateName(userDetails.getFathername(), "Father Name");
+
+        validateDateOfBirth(userDetails.getDateofbirth());
+        validateStartDate(userDetails.getStartdate());
+        validateEndDate(userDetails.getEnddate(), userDetails.getStartdate());
+
+        validateAddress(userDetails.getAddress());
+
+        validatePhoneNumber(userDetails.getPhoneno());
+        validateEmailId(userDetails.getEmailid());
+    }
+
+    private void validateName(String name, String fieldName) throws ValidationException {
+        if (name == null || !name.matches("^[a-zA-Z ]+$")) {
+            throw new ValidationException(fieldName + " is invalid. Should contain only alphabets and spaces.");
+        }
+
+        if (name.length() > 50) {
+            throw new ValidationException(fieldName + " should not exceed 50 characters.");
+        }
+    }
+
+    private void validateDateOfBirth(Date dateOfBirth) throws ValidationException {
+        if (dateOfBirth == null) {
+            throw new ValidationException("Date of birth is mandatory.");
+        }
+
+        Calendar currentDate = Calendar.getInstance();
+        currentDate.add(Calendar.YEAR, -60);
+
+        if (dateOfBirth.before(currentDate.getTime())) {
+            throw new ValidationException("Date of birth must not be 60 years or more in the past.");
+        }
+    }
+
+    private void validateStartDate(LocalDateTime startDate) throws ValidationException {
+        if (startDate == null) {
+            throw new ValidationException("Start date is mandatory.");
+        }
+
+        LocalDateTime currentDate = LocalDateTime.now();
+        if (startDate.isBefore(currentDate)) {
+            throw new ValidationException("Start date must be a future date.");
+        }
+    }
+
+    private void validateEndDate(LocalDateTime endDate, LocalDateTime startDate) throws ValidationException {
+        if (endDate == null) {
+            // Default to +10 years from the current date if not provided
+            endDate = LocalDateTime.now().plusYears(10);
+        }
+
+        if (endDate.isBefore(LocalDateTime.now())) {
+            throw new ValidationException("End date must be a future date.");
+        }
+
+        if (startDate != null && endDate.isBefore(startDate)) {
+            throw new ValidationException("End date cannot be before the start date.");
+        }
+        
+    }
+
+    private void validateAddress(Address address) throws ValidationException {
+        if (address == null) {
+            throw new ValidationException("Address is mandatory.");
+        }
+
+        validateDoorNumber(address.getDoorno());
+        validateStreetName(address.getStreetname());
+        validateArea(address.getArea());
+        validateCity(address.getCity());
+        validateState(address.getState());
+        validatePinCode(address.getPincode());
+    }
+
+    private void validateDoorNumber(String doorNumber) throws ValidationException {
+        if (doorNumber == null || !doorNumber.matches("^[0-9\\-. ]+$")) {
+            throw new ValidationException("Invalid door number format.");
+        }
+    }
+
+
+    private void validateStreetName(String streetName) throws ValidationException {
+        if (streetName == null || !streetName.matches("^[a-zA-Z ,]+$")) {
+            throw new ValidationException("Invalid street name format.");
+        }
+    }
+
+    private void validateArea(String area) throws ValidationException {
+        if (area != null && area.length() > 20) {
+            throw new ValidationException("Area should not exceed 20 characters.");
+        }
+    }
+
+    private void validateCity(String city) throws ValidationException {
+        if (city == null || !city.matches("^[a-zA-Z ]+$")) {
+            throw new ValidationException("Invalid city format.");
+        }
+    }
+
+  
+
+    private void validateState(String state) throws ValidationException {
+        String[] allowedStates = {"Andhrapradesh", "Telangana", "Tamilnadu", "Karnataka", "Maharashtra", "Kerala"};
+        if (state == null || !Arrays.asList(allowedStates).contains(state)) {
+            throw new ValidationException("Invalid state. Allowed values are Andhrapradesh, Telangana, Tamilnadu, Karnataka, Maharashtra, Kerala.");
+        }
+    }
+
+
+
+    private void validatePinCode(String pinCode) throws ValidationException {
+        if (pinCode == null || !pinCode.matches("\\d{6}")) {
+            throw new ValidationException("Invalid pin code. It should be a 6-digit number.");
+        }
+    }
+
+    private void validatePhoneNumber(String phoneNumber) throws ValidationException {
+    	
+    	if (phoneNumber == null) {
+            throw new ValidationException("Phone number is mandatory.");
+        }
+
+        // Remove specific country codes (+91 or 0) if present
+        String cleanedPhoneNumber = phoneNumber.replaceFirst("^(\\+91|0)", "");
+
+        // Ensure the cleaned phone number is exactly 10 digits long
+        if (!cleanedPhoneNumber.matches("\\d{10}")) {
+            throw new ValidationException("Invalid phone number. It should be an exact 10-digit number.");
+        }
+        
+    }
+
+    private void validateEmailId(String emailId) throws ValidationException {
+        if (emailId == null || !emailId.matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,6}$")) {
+            throw new ValidationException("Invalid email ID format.");
+        }
+    }
+
+    private void generateAndSetAadharNo(UserDetails userDetails) {
+        // Generate Aadhar number logic
+        long aadharNo = generateRandomAadharNo();
+        userDetails.setAadharno(aadharNo);
+    }
+
+    private long generateRandomAadharNo() {
+    	Random random = new Random();
+        StringBuilder aadharNumber = new StringBuilder();
+
+        // Ensure the generated Aadhar number is of 12 digits
+        while (aadharNumber.length() < 12) {
+            // Append a random digit to the Aadhar number
+            aadharNumber.append(random.nextInt(10));
+        }
+
+        return Long.parseLong(aadharNumber.toString());
+    }
+
+    public ResponseEntity<String> updateDetails(long id, UserDetails userDetails) {
+        Optional<UserDetails> existingUser = detailsRepository.findById(id);
+
+        if (existingUser.isPresent()) {
+            UserDetails user = existingUser.get();
+
+            // Validate user details
+            try {
+                validateUserDetails(userDetails);
+            } catch (ValidationException e) {
+                List<AadharResponseHandler.ErrorDetail> errors = new ArrayList<>();
+                errors.add(new AadharResponseHandler.ErrorDetail("null", e.getMessage()));
+                return AadharResponseHandler.handleFailureResponse(errors);
+            }
+
+            // Update user details
+            user.setFirstname(userDetails.getFirstname());
+            user.setMiddlename(userDetails.getMiddlename());
+            user.setLastname(userDetails.getLastname());
+            user.setFathername(userDetails.getFathername());
+            user.setDateofbirth(userDetails.getDateofbirth());
+            user.setStartdate(userDetails.getStartdate());
+            user.setEnddate(userDetails.getEnddate());
+            user.setAddress(userDetails.getAddress());
+            user.setPhoneno(userDetails.getPhoneno());
+            user.setEmailid(userDetails.getEmailid());
+
+            // Save updated details to the database
+            detailsRepository.save(user);
+
+            return AadharResponseHandler.handleSuccessResponse("Details updated successfully.", user);
+        } else {
+            List<AadharResponseHandler.ErrorDetail> errors = new ArrayList<>();
+            errors.add(new AadharResponseHandler.ErrorDetail("null", "User with ID " + id + " not found."));
+            return AadharResponseHandler.handleFailureResponse(errors);
+        }
+    }
+
+
+    public String deleteDetails(long id) {
+        if (detailsRepository.existsById(id)) {
+            detailsRepository.deleteById(id);
+            return "Details Deleted Successfully.";
+        } else {
+            return "Details with ID " + id + " not found. Deletion failed.";
+        }
+    }
+}

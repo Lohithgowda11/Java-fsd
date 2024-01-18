@@ -1,0 +1,78 @@
+package com.example.controller;
+
+import com.example.entity.UserDetails;
+import com.example.responsehandler.AadharResponseHandler;
+import com.example.service.UserDetailsService;
+import jakarta.validation.Valid;
+
+import org.aspectj.bridge.Message;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/user-details")
+public class UserDetailsController {
+
+	private static int errorCodeCounter = 1001;
+	
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @GetMapping("/all")
+    public List<UserDetails> getAllUserDetails() {
+        return userDetailsService.getAllDetails();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDetails> getUserDetails(@PathVariable long id) {
+        UserDetails userDetails = userDetailsService.getDetails(id);
+        if (userDetails != null) {
+            return ResponseEntity.ok(userDetails);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }  
+    
+    
+
+    @PostMapping("/adddetails")
+    public ResponseEntity<String> addUserDetails(@Valid @RequestBody UserDetails userDetails, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            List<AadharResponseHandler.ErrorDetail> errors = new ArrayList<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.add(new AadharResponseHandler.ErrorDetail(error.getField(), error.getDefaultMessage()));
+            }
+            return AadharResponseHandler.handleFailureResponse(errors);
+        } else {
+            return userDetailsService.addDetails(userDetails);
+        }
+    }
+
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateUserDetails(@PathVariable long id, @Valid @RequestBody UserDetails userDetails, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            List<AadharResponseHandler.ErrorDetail> errors = new ArrayList<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.add(new AadharResponseHandler.ErrorDetail(error.getField(), error.getDefaultMessage()));
+            }
+            return AadharResponseHandler.handleFailureResponse(errors);
+        } else {
+            return userDetailsService.updateDetails(id, userDetails);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteUserDetails(@PathVariable long id) {
+    	return userDetailsService.deleteDetails(id);
+        
+    }
+}

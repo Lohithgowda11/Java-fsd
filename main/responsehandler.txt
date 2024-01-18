@@ -1,0 +1,116 @@
+package com.example.responsehandler;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import com.example.entity.UserDetails;
+
+public class AadharResponseHandler {
+
+    public static ResponseEntity<String> handleSuccessResponse(String aadharNumber, UserDetails userDetails) {
+        String successResponse = "{\n" +
+                " \"header\": {\n" +
+                "  \"highest Sevirity\": \"Success\",\n" +
+                "     \"responseMessages\": [{\n" +
+                "      \"severity\": \"SUCCESS\",\n" +
+                "      \"code\": \"S-R-0000\",\n" +
+                "      \"paramerter\": \"null\",\n" +
+                "      \"message\": \"Aadhar Registered Successfully\"\n" +
+                "    }],\n" +
+                "    \"aadharDetails\": {\n" +
+                "      \"aadharNumber\": \"" + aadharNumber + "\",\n" +
+                "      \"firstName\": \"" + userDetails.getFirstname() + "\",\n" +
+                "      \"middleName\": \"" + userDetails.getMiddlename() + "\",\n" +
+                "      \"lastName\": \"" + userDetails.getLastname() + "\",\n" +
+                "      \"fatherName\": \"" + userDetails.getFathername() + "\",\n" +
+                "      \"dateOfBirth\": \"" + userDetails.getDateofbirth() + "\",\n" +
+                "      \"startDate\": \"" + userDetails.getStartdate() + "\",\n" +
+                "      \"endDate\": \"" + userDetails.getEnddate() + "\",\n" +
+                "      \"address\": {\n" +
+                "        \"doorNumber\": \"" + userDetails.getAddress().getDoorno() + "\",\n" +
+                "        \"streetName\": \"" + userDetails.getAddress().getStreetname() + "\",\n" +
+                "        \"area\": \"" + userDetails.getAddress().getArea() + "\",\n" +
+                "        \"city\": \"" + userDetails.getAddress().getCity() + "\",\n" +
+                "        \"state\": \"" + userDetails.getAddress().getState() + "\",\n" +
+                "        \"pinCode\": \"" + userDetails.getAddress().getPincode() + "\"\n" +
+                "      },\n" +
+                "      \"phoneNumber\": " + userDetails.getPhoneno() + ",\n" +
+                "      \"emailId\": \"" + userDetails.getEmailid() + "\"\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        return new ResponseEntity<>(successResponse, HttpStatus.OK);
+    }
+
+    public static int errorCodeCounter = 1001; 
+
+   
+
+    public static ResponseEntity<String> handleFailureResponse(List<ErrorDetail> errors) {
+        StringBuilder responseBuilder = new StringBuilder("{\n" +
+                "  \"header\": {\n" +
+                "    \"highestSevireity\": \"ERROR\",\n" +
+                "    \"responseMessages\": [\n");
+
+        for (ErrorDetail error : errors) {
+            responseBuilder.append("      {\n");
+            responseBuilder.append("        \"severity\": \"ERROR\",\n");
+            responseBuilder.append("        \"code\": \"").append(generateErrorCode()).append("\",\n");
+            responseBuilder.append("        \"paramerter\": \"").append(error.getParameter()).append("\",\n");
+            responseBuilder.append("        \"message\": \"").append(error.getMessage()).append("\"\n");
+            responseBuilder.append("      },\n");
+        }
+
+        
+        if (!errors.isEmpty()) {
+            responseBuilder.delete(responseBuilder.length() - 2, responseBuilder.length());
+        }
+
+        responseBuilder.append("    ]\n" +
+                "  }\n" +
+                "}");
+
+        return new ResponseEntity<>(responseBuilder.toString(), HttpStatus.BAD_REQUEST);
+    }
+
+    private static String generateErrorCode() {
+        // Generate error code in the format "E-R-xxxx"
+        return "E-R-" + errorCodeCounter++;
+    }
+
+    public static class ErrorDetail {
+        private String parameter;
+        private String message;
+
+        public ErrorDetail(String parameter, String message) {
+            this.parameter = parameter;
+            this.message = message;
+        }
+
+        public String getParameter() {
+            return parameter;
+        }
+
+        public void setParameter(String parameter) {
+            this.parameter = parameter;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
+
+    
+
+}
+
+
+
+
+

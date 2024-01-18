@@ -1,0 +1,351 @@
+package com.example.entity;
+
+import java.sql.Date;
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Entity
+@Data
+public class UserDetails {
+	
+	@Id
+	@GeneratedValue(generator="idg")
+	@SequenceGenerator(initialValue=1000,allocationSize=1,name="idg",sequenceName="idg")
+	private long id;
+
+	@Column(name = "Aadharno", nullable = false)
+	private long Aadharno;
+	
+	@Column(name = "firstname", nullable = false)
+	@NotBlank(message = "First name is mandatory")
+    @Size(max = 50, message = "Total length of first, middle, and last names should not exceed 50 characters")
+    @Pattern(regexp = "^[a-zA-Z ]+$", message = "Invalid format for first name. Should contain only alphabets and spaces.")
+	private String firstname;
+	
+	@Size(max = 50, message = "Middle name should not exceed 50 characters")
+    @Pattern(regexp = "^[a-zA-Z ]*$", message = "Invalid format for middle name. Should contain only alphabets and spaces.")
+	private String middlename;
+	
+	
+	@Column(name = "lastname", nullable = false)
+	@Size(max = 50, message = "Total length of first, middle, and last names should not exceed 50 characters")
+    @Pattern(regexp = "^[a-zA-Z ]+$", message = "Invalid format for last name. Should contain only alphabets and spaces.")
+	private String lastname;
+	
+	@Column(name = "fathername", nullable = false)
+	@Size(max = 50, message = "Father name should not exceed 50 characters")
+	@Pattern(regexp = "^[a-zA-Z ]+$", message = "Invalid format for father name. Should contain only alphabets and spaces.")
+	private String fathername;
+	
+	@Column(name = "dateofbirth", nullable = false)
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	@NotNull(message = "Date of birth is mandatory")
+	@Past(message = "Date of birth must be in the past")
+	private Date dateofbirth;
+
+	
+	@Column(name = "startdate", nullable = false)
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+	@NotNull(message = "Start date is mandatory")
+	//@Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$", message = "Invalid date and time format. Should be in yyyy-MM-dd'T'HH:mm:ss'Z'.")
+	private LocalDateTime startdate;
+	
+	@Column(name = "enddate", nullable = false)
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+	@NotNull(message = "End date is mandatory")
+	//@Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$", message = "Invalid date and time format. Should be in yyyy-MM-dd'T'HH:mm:ss'Z'.")
+	private LocalDateTime enddate;
+	
+	
+	@Embedded
+	private Address address;
+	
+	@Email(message = "Invalid email format")
+    @Column(name = "emailid", nullable = false, unique = true)
+	@NotBlank(message = "Emailid is mandatory")
+	@Pattern(regexp = "^[a-z0-9._%+-]+@gmail\\.com$", message = "Invalid email ID format. Only domain @gmail.com is allowed.")
+	private String emailid;
+	
+	@Pattern(regexp = "^([0]|\\+91)?([1-9]\\d{9})$", message = "Invalid phone number format")
+    @Column(name = "phoneno", nullable = false, unique = true)
+	@NotBlank(message = "Phoneno is mandatory")
+	private String phoneno;
+
+
+	public long getId() {
+		return id;
+	}
+
+
+	public UserDetails() {
+		super();
+	}
+
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+
+	public String getFirstname() {
+		return firstname;
+	}
+
+
+	public void setFirstname(String firstname) {
+		this.firstname = firstname;
+	}
+
+
+	public String getMiddlename() {
+		return middlename;
+	}
+
+
+	public void setMiddlename(String middlename) {
+		this.middlename = middlename;
+	}
+
+
+	public String getLastname() {
+		return lastname;
+	}
+
+
+	public void setLastname(String lastname) {
+		this.lastname = lastname;
+	}
+
+
+	public String getFathername() {
+		return fathername;
+	}
+
+
+	public void setFathername(String fathername) {
+		this.fathername = fathername;
+	}
+
+
+	public Date getDateofbirth() {
+		return dateofbirth;
+	}
+
+
+	public void setDateofbirth(Date dateofbirth) {
+		this.dateofbirth = dateofbirth;
+	}
+
+
+	public LocalDateTime getStartdate() {
+		return startdate;
+	}
+
+
+	public void setStartdate(LocalDateTime startdate) {
+		this.startdate = startdate;
+	}
+
+
+	public LocalDateTime getEnddate() {
+		return enddate;
+	}
+
+
+	public void setEnddate(LocalDateTime enddate) {
+		this.enddate = enddate;
+	}
+
+
+	public Address getAddress() {
+		return address;
+	}
+
+
+	public void setAddress(Address address) {
+		this.address = address;
+	}
+
+
+	public String getEmailid() {
+		return emailid;
+	}
+
+
+	public void setEmailid(String emailid) {
+		this.emailid = emailid;
+	}
+
+
+	public String getPhoneno() {
+		return phoneno;
+	}
+
+
+	public void setPhoneno(String phoneno) {
+		this.phoneno = phoneno;
+	}
+
+	public long getAadharno() {
+		return Aadharno;
+	}
+
+
+	public void setAadharno(long aadharno) {
+		Aadharno = aadharno;
+	}
+
+
+	public UserDetails(long id, long aadharno, String firstname, String middlename, String lastname, String fathername,
+			Date dateofbirth, LocalDateTime startdate, LocalDateTime enddate, Address address, String emailid,
+			String phoneno) {
+		super();
+		this.id = id;
+		Aadharno = aadharno;
+		this.firstname = firstname;
+		this.middlename = middlename;
+		this.lastname = lastname;
+		this.fathername = fathername;
+		this.dateofbirth = dateofbirth;
+		this.startdate = startdate;
+		this.enddate = enddate;
+		this.address = address;
+		this.emailid = emailid;
+		this.phoneno = phoneno;
+	}
+
+
+	@Override
+	public String toString() {
+		return "UserDetails [id=" + id + ", Aadharno=" + Aadharno + ", firstname=" + firstname + ", middlename="
+				+ middlename + ", lastname=" + lastname + ", fathername=" + fathername + ", dateofbirth=" + dateofbirth
+				+ ", startdate=" + startdate + ", enddate=" + enddate + ", address=" + address + ", emailid=" + emailid
+				+ ", phoneno=" + phoneno + "]";
+	}
+
+
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+package com.example.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+@Embeddable
+public class Address {
+	
+	@Column(name = "doorno", nullable = false)
+	@Pattern(regexp = "^[a-zA-Z0-9.-]*$", message = "Invalid door number format")
+	private String doorno;
+	
+	@Column(name = "streetname", nullable = false)
+	@Pattern(regexp = "^[a-zA-Z,\\s]*$", message = "Invalid street name format")
+	private String streetname;
+	
+	@Size(max = 20, message = "Area should not exceed 20 characters")
+	private String area;
+	
+	@Column(name = "city", nullable = false)
+	@NotBlank(message = "City is mandatory")
+    @Pattern(regexp = "^[a-zA-Z ]+$", message = "City should contain only alphabets and space")
+	private String city;
+	
+	@Column(name = "state", nullable = false)
+	@NotBlank(message = "State is mandatory")
+    
+	private String state;
+	
+	@Column(name = "pincode", nullable = false)
+	@NotBlank(message = "Pin code is mandatory")
+    
+	private String pincode;
+	
+	
+	public String getDoorno() {
+		return doorno;
+	}
+	public void setDoorno(String doorno) {
+		this.doorno = doorno;
+	}
+	public String getStreetname() {
+		return streetname;
+	}
+	public void setStreetname(String streetname) {
+		this.streetname = streetname;
+	}
+	public String getArea() {
+		return area;
+	}
+	public void setArea(String area) {
+		this.area = area;
+	}
+	public String getCity() {
+		return city;
+	}
+	public void setCity(String city) {
+		this.city = city;
+	}
+	public String getState() {
+		return state;
+	}
+	public void setState(String state) {
+		this.state = state;
+	}
+	public String getPincode() {
+		return pincode;
+	}
+	public void setPincode(String pincode) {
+		this.pincode = pincode;
+	}
+	public Address(String doorno, String streetname, String area, String city, String state, String pincode) {
+		super();
+		this.doorno = doorno;
+		this.streetname = streetname;
+		this.area = area;
+		this.city = city;
+		this.state = state;
+		this.pincode = pincode;
+	}
+	@Override
+	public String toString() {
+		return "Address [doorno=" + doorno + ", streetname=" + streetname + ", area=" + area + ", city=" + city
+				+ ", state=" + state + ", pincode=" + pincode + "]";
+	}
+	public Address() {
+		
+	}
+	
+
+}
